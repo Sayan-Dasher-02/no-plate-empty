@@ -57,29 +57,27 @@ const HeroSection = () => {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-3 gap-6 mt-12 pt-8 border-t border-primary-foreground/20 animate-fade-up" style={{ animationDelay: "0.4s" }}>
+          <div className="grid grid-cols-4 gap-6 mt-12 pt-8 border-t-4 border-primary-foreground/20 animate-fade-up" style={{ animationDelay: "0.4s" }}>
             <div>
-              <div className="text-3xl md:text-4xl font-display font-bold text-secondary">2M+</div>
+              <div className="text-4xl md:text-4xl font-display font-bold text-secondary">2M+</div>
               <div className="text-sm text-primary-foreground/70">Meals Saved</div>
             </div>
             <div>
-              <div className="text-3xl md:text-4xl font-display font-bold text-secondary">5K+</div>
+              <div className="text-4xl md:text-4xl font-display font-bold text-secondary">5K+</div>
               <div className="text-sm text-primary-foreground/70">Active Donors</div>
             </div>
             <div>
-              <div className="text-3xl md:text-4xl font-display font-bold text-secondary">300+</div>
+              <div className="text-4xl md:text-4xl font-display font-bold text-secondary">300+</div>
               <div className="text-sm text-primary-foreground/70">Partner Orgs</div>
+            </div>
+            <div>
+              <div className="text-4xl md:text-4xl font-display font-bold text-secondary">24/7</div>
+              <div className="text-sm text-primary-foreground/70">Available</div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Scroll Indicator */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce-gentle">
-        <div className="w-6 h-10 border-2 border-primary-foreground/30 rounded-full flex justify-center pt-2">
-          <div className="w-1.5 h-3 bg-primary-foreground/50 rounded-full animate-pulse" />
-        </div>
-      </div>
     </section>
   );
 };
