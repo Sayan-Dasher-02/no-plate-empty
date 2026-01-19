@@ -41,7 +41,7 @@ const categories = [
     name: "Food Manufacturers",
     description: "Packaged and processed foods",
     count: "200+",
-    color: "from-secondary to-carrot",
+    color: "from-primary to-secondary/70",
   },
 ];
 
