@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CheckCircle2, Clock3, ShieldCheck } from "lucide-react";
+import { CheckCircle2, Clock3, ShieldCheck, XCircle } from "lucide-react";
 import { API } from "@/lib/api";
 import DashboardShell from "@/components/dashboard/DashboardShell";
 import { Badge } from "@/components/ui/badge";
@@ -28,7 +28,10 @@ const AdminDashboard = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [approvingId, setApprovingId] = useState<string | null>(null);
+  const [pendingAction, setPendingAction] = useState<{
+    id: string;
+    type: "approve" | "reject";
+  } | null>(null);
 
   const loadPendingUsers = async () => {
     if (!token) {
@@ -71,7 +74,7 @@ const AdminDashboard = () => {
       return;
     }
 
-    setApprovingId(id);
+    setPendingAction({ id, type: "approve" });
     setError("");
     setSuccess("");
 
@@ -100,7 +103,46 @@ const AdminDashboard = () => {
     } catch (err) {
       setError(getErrorMessage(err, "Approval failed."));
     } finally {
-      setApprovingId(null);
+      setPendingAction(null);
+    }
+  };
+
+  const rejectUser = async (id: string) => {
+    if (!token) {
+      setError("Your session has expired. Please sign in again.");
+      return;
+    }
+
+    setPendingAction({ id, type: "reject" });
+    setError("");
+    setSuccess("");
+
+    try {
+      const response = await fetch(`${API}/api/admin/reject/${id}`, {
+        method: "PATCH",
+        headers: getAuthHeaders(token),
+      });
+      const payload = await readApiResponse(response);
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          clearSession();
+        }
+        throw new Error(getApiErrorMessage(payload, "Rejection failed."));
+      }
+
+      setPendingUsers((currentUsers) =>
+        currentUsers.filter((pendingUser) => pendingUser._id !== id),
+      );
+      setSuccess(
+        payload?.message
+          ? String(payload.message)
+          : "User rejected successfully. The account will be deleted after the rejection retention window.",
+      );
+    } catch (err) {
+      setError(getErrorMessage(err, "Rejection failed."));
+    } finally {
+      setPendingAction(null);
     }
   };
 
@@ -114,8 +156,10 @@ const AdminDashboard = () => {
           <div>
             <CardTitle>Pending User Approvals</CardTitle>
             <CardDescription>
-              Connected to `GET /api/admin/pending-users` and `PATCH /api/admin/approve/:id`.
-              Approved users can sign in immediately after approval.
+              Connected to `GET /api/admin/pending-users`, `PATCH /api/admin/approve/:id`,
+              and `PATCH /api/admin/reject/:id`. Approved users can sign in immediately.
+              Rejected users will see the rejection message until the retention window
+              ends and their account is deleted automatically.
             </CardDescription>
           </div>
           <div className="flex flex-wrap gap-3 text-sm">
@@ -186,13 +230,30 @@ const AdminDashboard = () => {
                     </div>
                   </div>
 
-                  <Button
-                    className="min-w-32"
-                    onClick={() => void approveUser(pendingUser._id)}
-                    disabled={approvingId === pendingUser._id}
-                  >
-                    {approvingId === pendingUser._id ? "Approving..." : "Approve"}
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      className="min-w-28"
+                      onClick={() => void approveUser(pendingUser._id)}
+                      disabled={pendingAction?.id === pendingUser._id}
+                    >
+                      {pendingAction?.id === pendingUser._id &&
+                      pendingAction.type === "approve"
+                        ? "Approving..."
+                        : "Approve"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="min-w-28"
+                      onClick={() => void rejectUser(pendingUser._id)}
+                      disabled={pendingAction?.id === pendingUser._id}
+                    >
+                      <XCircle className="mr-2 h-4 w-4" />
+                      {pendingAction?.id === pendingUser._id &&
+                      pendingAction.type === "reject"
+                        ? "Rejecting..."
+                        : "Reject"}
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>

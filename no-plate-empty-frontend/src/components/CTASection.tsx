@@ -1,7 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Heart, Sparkles } from "lucide-react";
 
-const CTASection = () => {
+interface CTASectionProps {
+  onStartJourney: () => void;
+  onLearnMore: () => void;
+}
+
+const CTASection = ({ onStartJourney, onLearnMore }: CTASectionProps) => {
   return (
     <section className="py-24 bg-background relative overflow-hidden">
       <div className="container mx-auto px-4">
@@ -30,12 +35,17 @@ const CTASection = () => {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button variant="hero" size="xl" className="group">
+              <Button
+                variant="hero"
+                size="xl"
+                className="group"
+                onClick={onStartJourney}
+              >
                 <Heart className="w-5 h-5" />
                 Start Your Journey
                 <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
               </Button>
-              <Button variant="heroOutline" size="xl">
+              <Button variant="heroOutline" size="xl" onClick={onLearnMore}>
                 Learn More
               </Button>
             </div>

@@ -2,6 +2,19 @@ const User = require("../models/user");
 const RevokedToken = require("../models/RevokedToken");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const {
+  buildRejectedMessage,
+  isRejectedExpired
+} = require("../utils/rejectedUserPolicy");
+
+const deleteRejectedUserIfExpired = async (user) => {
+  if (!user || !isRejectedExpired(user)) {
+    return false;
+  }
+
+  await User.findByIdAndDelete(user._id);
+  return true;
+};
 
 /*
  =========================
@@ -20,8 +33,19 @@ exports.register = async (req, res) => {
     }
 
     // 2. Check duplicate email
-    const existingUser = await User.findOne({ email });
+    let existingUser = await User.findOne({ email });
+
+    if (await deleteRejectedUserIfExpired(existingUser)) {
+      existingUser = null;
+    }
+
     if (existingUser) {
+      if (existingUser.isRejected) {
+        return res.status(403).json({
+          message: buildRejectedMessage(existingUser)
+        });
+      }
+
       return res.status(400).json({
         message: "User already exists"
       });
@@ -36,7 +60,10 @@ exports.register = async (req, res) => {
       email,
       password: hashedPassword,
       role,
-      isApproved: role === "SUPER_ADMIN" // only admin auto-approved
+      isApproved: role === "SUPER_ADMIN", // only admin auto-approved
+      isRejected: false,
+      rejectedAt: null,
+      rejectionDeleteAt: null
     });
 
     res.status(201).json({
@@ -64,6 +91,18 @@ exports.login = async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.isRejected) {
+      if (await deleteRejectedUserIfExpired(user)) {
+        return res.status(410).json({
+          message: "Your rejected registration has been deleted. Please register again."
+        });
+      }
+
+      return res.status(403).json({
+        message: buildRejectedMessage(user)
+      });
     }
 
     if (!user.isApproved && user.role !== "SUPER_ADMIN") {
@@ -163,7 +202,10 @@ exports.updateCurrentUser = async (req, res) => {
         email: user.email,
         role: user.role,
         isApproved: user.isApproved,
-        isBlocked: user.isBlocked
+        isBlocked: user.isBlocked,
+        isRejected: user.isRejected,
+        rejectedAt: user.rejectedAt,
+        rejectionDeleteAt: user.rejectionDeleteAt
       }
     });
   } catch (error) {

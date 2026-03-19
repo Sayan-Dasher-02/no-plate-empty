@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
 import HowItWorks from "@/components/HowItWorks";
@@ -7,42 +8,80 @@ import FoodCategories from "@/components/FoodCategories";
 import { DonorSection, RecipientSection } from "@/components/UserSections";
 import CTASection from "@/components/CTASection";
 import Footer from "@/components/Footer";
+import JourneyDialog from "@/components/JourneyDialog";
 
 // Import the Modal Components
 import { DonorModal } from "@/pages/DonorRegister";
 import { RecipientModal } from "@/pages/RecipientRegister";
 
 const Index = () => {
-  // 1. Define states to control the visibility of both modals
+  const navigate = useNavigate();
   const [isDonorOpen, setIsDonorOpen] = useState(false);
   const [isRecipientOpen, setIsRecipientOpen] = useState(false);
+  const [isJourneyOpen, setIsJourneyOpen] = useState(false);
+
+  const openDonorModal = () => {
+    setIsJourneyOpen(false);
+    setIsDonorOpen(true);
+  };
+
+  const openRecipientModal = () => {
+    setIsJourneyOpen(false);
+    setIsRecipientOpen(true);
+  };
+
+  const openAdminLogin = () => {
+    setIsJourneyOpen(false);
+    navigate("/admin/login");
+  };
+
+  const openUserLogin = () => {
+    setIsJourneyOpen(false);
+    navigate("/login");
+  };
+
+  const scrollToHowItWorks = () => {
+    document
+      .getElementById("how-it-works")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   return (
     <div className="min-h-screen bg-background">
-      {/* 2. Pass modal triggers to the Header (for the Sign Up dropdown) */}
       <Header 
-        onOpenDonor={() => setIsDonorOpen(true)} 
-        onOpenRecipient={() => setIsRecipientOpen(true)} 
+        onOpenDonor={openDonorModal} 
+        onOpenRecipient={openRecipientModal} 
       />
       
       <main>
-        {/* 3. Pass triggers to HeroSection (for the "Start Donating" button) */}
-        <HeroSection onOpenDonor={() => setIsDonorOpen(true)} />
+        <HeroSection
+          onOpenDonor={openDonorModal}
+          onOpenRecipient={openRecipientModal}
+        />
         
         <HowItWorks />
         <FoodCategories />
         
-        {/* 4. Pass triggers to UserSections */}
-        <DonorSection onOpenRegister={() => setIsDonorOpen(true)} />
-        <RecipientSection onOpenRegister={() => setIsRecipientOpen(true)} />
+        <DonorSection onOpenRegister={openDonorModal} />
+        <RecipientSection onOpenRegister={openRecipientModal} />
         
         <ImpactStats />
-        <CTASection onOpenDonor={() => setIsDonorOpen(true)} />
+        <CTASection
+          onStartJourney={() => setIsJourneyOpen(true)}
+          onLearnMore={scrollToHowItWorks}
+        />
       </main>
       
       <Footer />
 
-      {/* 5. Render the Modals globally at the bottom of the page */}
+      <JourneyDialog
+        open={isJourneyOpen}
+        onOpenChange={setIsJourneyOpen}
+        onChooseDonor={openDonorModal}
+        onChooseRecipient={openRecipientModal}
+        onChooseAdmin={openAdminLogin}
+        onGoToLogin={openUserLogin}
+      />
       <DonorModal 
         isOpen={isDonorOpen} 
         onOpenChange={setIsDonorOpen} 

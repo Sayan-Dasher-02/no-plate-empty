@@ -9,6 +9,9 @@ export interface AuthUser {
   role: UserRole;
   isApproved: boolean;
   isBlocked: boolean;
+  isRejected?: boolean;
+  rejectedAt?: string | null;
+  rejectionDeleteAt?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -99,11 +102,21 @@ export const getRoleLabel = (role: UserRole) => {
 };
 
 const normalizeApiMessage = (message?: string) => {
+  if (!message) {
+    return message;
+  }
+
+  if (message.startsWith("Admin rejected your registration.")) {
+    return message;
+  }
+
   switch (message) {
     case "Approval pending":
       return "Your account is not approved yet. Please wait for admin approval.";
     case "User blocked":
       return "Your account has been blocked. Please contact the administrator.";
+    case "Your rejected registration has been deleted. Please register again.":
+      return "Your rejected registration has been deleted. Please register again.";
     case "Invalid credentials":
       return "The email or password you entered is incorrect.";
     case "User not found":

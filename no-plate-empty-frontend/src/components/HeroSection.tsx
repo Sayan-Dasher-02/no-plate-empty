@@ -2,7 +2,12 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles } from "lucide-react";
 import heroImage from "@/assets/hero-food.jpg";
 
-const HeroSection = () => {
+interface HeroSectionProps {
+  onOpenDonor: () => void;
+  onOpenRecipient: () => void;
+}
+
+const HeroSection = ({ onOpenDonor, onOpenRecipient }: HeroSectionProps) => {
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden pt-20">
       {/* Background Image with Overlay */}
@@ -47,11 +52,20 @@ const HeroSection = () => {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 animate-fade-up" style={{ animationDelay: "0.3s" }}>
-            <Button variant="hero" size="lg" className="group">
+            <Button
+              variant="hero"
+              size="lg"
+              className="group"
+              onClick={onOpenDonor}
+            >
               Start Donating
               <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
             </Button>
-            <Button variant="heroOutline" size="lg">
+            <Button
+              variant="heroOutline"
+              size="lg"
+              onClick={onOpenRecipient}
+            >
               Find Food Near You
             </Button>
           </div>

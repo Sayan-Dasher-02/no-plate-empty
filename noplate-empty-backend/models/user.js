@@ -18,7 +18,10 @@ const userSchema = new mongoose.Schema({
   },
 
   isApproved: { type: Boolean, default: false },
-  isBlocked: { type: Boolean, default: false }
+  isBlocked: { type: Boolean, default: false },
+  isRejected: { type: Boolean, default: false },
+  rejectedAt: { type: Date, default: null },
+  rejectionDeleteAt: { type: Date, default: null }
 
 }, { timestamps: true });
 
