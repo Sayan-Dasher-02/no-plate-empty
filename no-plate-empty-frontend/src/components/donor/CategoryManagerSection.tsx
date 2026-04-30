@@ -38,10 +38,6 @@ const CategoryManagerSection = () => {
     text: string;
   } | null>(null);
 
-  if (!token) {
-    return null;
-  }
-
   const loadCategories = async () => {
     setIsLoading(true);
     try {
@@ -60,6 +56,10 @@ const CategoryManagerSection = () => {
   useEffect(() => {
     void loadCategories();
   }, []);
+
+  if (!token) {
+    return null;
+  }
 
   const submitCategory = async () => {
     setIsSaving(true);

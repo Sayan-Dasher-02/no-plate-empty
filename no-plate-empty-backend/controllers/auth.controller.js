@@ -91,6 +91,12 @@ exports.register = async (req, res) => {
       });
     }
 
+    if (!["DONOR", "NGO"].includes(role)) {
+      return res.status(400).json({
+        message: "Invalid registration role"
+      });
+    }
+
     if (role === "NGO" && normalizedSearchRadius === null) {
       return res.status(400).json({
         message: "Search radius must be between 1 and 100 km"

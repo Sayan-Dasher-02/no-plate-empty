@@ -1,172 +1,72 @@
 # Frontend + Backend Connection Overview
 
-This document explains how the React frontend is connected to the Express backend in this project, what was changed, and why those changes matter.
+This project has three runnable parts:
 
-## Goal
-Make frontend API calls work cleanly in both development and production.
+- Frontend: `no-plate-empty-frontend`
+- Backend API: `no-plate-empty-backend`
+- ML analytics API: `no-plate-empty-backend/app.py`
 
-## 1. API Base URL (Frontend)
-**File:** `no-plate-empty-main/Frontend/src/lib/api.ts`
+## Development Ports
 
-**Purpose:** Single source of truth for API base URL.
+Backend `.env`:
 
-```ts
-export const API = import.meta.env.VITE_API_BASE_URL ?? "";
+```env
+PORT=5001
+MONGO_URI=<your MongoDB connection string>
+JWT_SECRET=<secret>
+REFRESH_SECRET=<secret>
 ```
 
-**Why:**  
-- In dev, API base is `http://localhost:5000`.  
-- In prod, frontend and backend share the same origin, so base can be empty.
+Frontend `.env.development`:
 
-## 2. Environment Files (Frontend)
-**Files:**  
-- `no-plate-empty-main/Frontend/.env`  
-- `no-plate-empty-main/Frontend/.env.development`
-
-**Values:**
-```
-# .env.development
-VITE_API_BASE_URL=http://localhost:5000
+```env
+VITE_API_BASE_URL=http://localhost:5001
+VITE_ML_API_BASE_URL=http://127.0.0.1:5000
 ```
 
-```
-# .env
-VITE_API_BASE_URL=
-```
+Vite runs on `http://localhost:5173`. Its dev proxy forwards `/api` requests to `http://localhost:5001`.
 
-**Why:**  
-Separate dev vs production configuration without touching code.
+## Run Commands
 
-## 3. Vite Proxy (Dev Only)
-**File:** `no-plate-empty-main/Frontend/vite.config.ts`
-
-**Added block:**
-```ts
-server: {
-  host: "::",
-  port: 8080,
-  proxy: {
-    "/api": {
-      target: "http://localhost:5000",
-      changeOrigin: true,
-    },
-  },
-},
-```
-
-**Why:**  
-Frontend can call `/api/...` directly and Vite forwards it to backend. This avoids CORS issues in development.
-
-## 4. CORS Configuration (Backend)
-**File:** `noplate-empty-backend/app.js`
-
-**Important section:**
-```js
-const allowedOrigins = ["http://localhost:8080", "http://127.0.0.1:8080"];
-
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
-      if (process.env.NODE_ENV === "production") return callback(null, true);
-      if (allowedOrigins.includes(origin)) return callback(null, true);
-      return callback(new Error("Not allowed by CORS"));
-    },
-    credentials: true,
-  })
-);
-```
-
-**Why:**  
-Browser blocks cross-origin calls by default. This allows requests from the frontend dev server.
-
-## 5. Serve Frontend Build in Production
-**File:** `noplate-empty-backend/app.js`
-
-**Added block:**
-```js
-if (process.env.NODE_ENV === "production") {
-  const clientBuildPath = path.join(
-    __dirname,
-    "..",
-    "no-plate-empty-main",
-    "Frontend",
-    "dist"
-  );
-
-  app.use(express.static(clientBuildPath));
-
-  app.get("*", (req, res) => {
-    res.sendFile(path.join(clientBuildPath, "index.html"));
-  });
-}
-```
-
-**Why:**  
-In production, the backend serves the React build so both run on a single domain.
-
-## 6. Donor Register Fix
-**File:** `no-plate-empty-main/Frontend/src/pages/DonorRegister.tsx`
-
-**Fix:**
-```ts
-body: JSON.stringify({
-  name,
-  email,
-  password,
-  role: "DONOR",
-}),
-```
-
-**Why:**  
-Backend requires `role`. Without it, registration returns 400.
-
-## 7. Login Response Alignment
-**File:** `no-plate-empty-main/Frontend/src/pages/LoginPage.tsx`
-
-**Fix:**
-```ts
-switch (data.role) {
-  case "DONOR":
-    navigate("/donor/dashboard");
-    break;
-  case "NGO":
-    navigate("/ngo/dashboard");
-    break;
-  case "SUPER_ADMIN":
-    navigate("/super-admin/dashboard");
-    break;
-}
-```
-
-**Why:**  
-Backend returns `role` directly (not `user.role`).
-
-## Quick Run Commands
-
-### Development
 Backend:
-```
-cd noplate-empty-backend
+
+```bash
+cd no-plate-empty-backend
 npm run dev
 ```
 
 Frontend:
-```
-cd no-plate-empty-main/Frontend
+
+```bash
+cd no-plate-empty-frontend
 npm run dev
 ```
 
-### Production
-Build frontend:
+ML analytics:
+
+```bash
+.venv\Scripts\python.exe no-plate-empty-backend\app.py
 ```
-cd no-plate-empty-main/Frontend
+
+By default, the ML service uses a local deterministic fallback so it can run even if compiled model dependencies are unavailable. Set `ML_USE_TRAINED_MODELS=true` only after the Python ML packages and model files are working correctly.
+
+## Production
+
+Build the frontend:
+
+```bash
+cd no-plate-empty-frontend
 npm run build
 ```
 
-Start backend:
-```
-cd noplate-empty-backend
-npm start
+Start the backend with `NODE_ENV=production`. The backend serves:
+
+```text
+no-plate-empty-frontend/dist
 ```
 
+## Notes
+
+- CORS allows local development origins like `http://localhost:5173` and `http://127.0.0.1:5173`.
+- The backend now fails fast if MongoDB cannot connect instead of hanging during startup.
+- If MongoDB returns `bad auth : authentication failed`, update the username/password/database credentials inside `no-plate-empty-backend/.env`.

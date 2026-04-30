@@ -11,7 +11,28 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const allowedOrigins = ["http://localhost:8080", "http://127.0.0.1:8080"];
+const configuredOrigins = (process.env.FRONTEND_ORIGINS || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+const allowedOrigins = [
+  "http://localhost:8080",
+  "http://127.0.0.1:8080",
+  ...configuredOrigins,
+];
+
+const isLocalDevelopmentOrigin = (origin) => {
+  try {
+    const { hostname, protocol } = new URL(origin);
+    return (
+      process.env.NODE_ENV !== "production" &&
+      protocol === "http:" &&
+      (hostname === "localhost" || hostname === "127.0.0.1")
+    );
+  } catch {
+    return false;
+  }
+};
 
 app.use(
   cors({
@@ -19,6 +40,7 @@ app.use(
       if (!origin) return callback(null, true);
       if (process.env.NODE_ENV === "production") return callback(null, true);
       if (allowedOrigins.includes(origin)) return callback(null, true);
+      if (isLocalDevelopmentOrigin(origin)) return callback(null, true);
       return callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
@@ -32,14 +54,13 @@ if (process.env.NODE_ENV === "production") {
   const clientBuildPath = path.join(
     __dirname,
     "..",
-    "no-plate-empty-main",
-    "Frontend",
+    "no-plate-empty-frontend",
     "dist"
   );
 
   app.use(express.static(clientBuildPath));
 
-  app.get("*", (req, res) => {
+  app.get(/.*/, (req, res) => {
     res.sendFile(path.join(clientBuildPath, "index.html"));
   });
 }
