@@ -22,6 +22,15 @@ const main = async () => {
 
   await mongoose.connect(MONGO_URI);
 
+  if (process.env.RESET_EXISTING_SUPER_ADMINS === "true") {
+    const result = await User.deleteMany({
+      role: "SUPER_ADMIN",
+      email: { $ne: ADMIN_EMAIL },
+    });
+
+    console.log(`Removed ${result.deletedCount} previous super admin account(s).`);
+  }
+
   const password = await bcrypt.hash(ADMIN_PASSWORD, 10);
   const admin = await User.findOneAndUpdate(
     { email: ADMIN_EMAIL },
