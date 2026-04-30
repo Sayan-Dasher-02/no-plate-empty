@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const fs = require("fs");
 const path = require("path");
 require("dotenv").config();
 
@@ -50,6 +51,10 @@ app.use(
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 
+app.get("/api/health", (req, res) => {
+  res.json({ status: "ok", service: "backend" });
+});
+
 if (process.env.NODE_ENV === "production") {
   const clientBuildPath = path.join(
     __dirname,
@@ -57,12 +62,19 @@ if (process.env.NODE_ENV === "production") {
     "no-plate-empty-frontend",
     "dist"
   );
+  const clientIndexPath = path.join(clientBuildPath, "index.html");
 
-  app.use(express.static(clientBuildPath));
+  if (fs.existsSync(clientIndexPath)) {
+    app.use(express.static(clientBuildPath));
 
-  app.get(/.*/, (req, res) => {
-    res.sendFile(path.join(clientBuildPath, "index.html"));
-  });
+    app.get(/.*/, (req, res) => {
+      res.sendFile(clientIndexPath);
+    });
+  } else {
+    app.get("/", (req, res) => {
+      res.json({ status: "ok", service: "backend" });
+    });
+  }
 }
 
 module.exports = app;

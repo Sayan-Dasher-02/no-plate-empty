@@ -1,0 +1,53 @@
+services:
+  - type: web
+    name: no-plate-empty-backend
+    runtime: node
+    plan: free
+    rootDir: no-plate-empty-backend
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: 24.14.1
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: REFRESH_SECRET
+        generateValue: true
+
+  - type: web
+    name: no-plate-empty-ml
+    runtime: python
+    plan: free
+    rootDir: no-plate-empty-backend
+    buildCommand: pip install -r ml/requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
+    healthCheckPath: /health
+    autoDeployTrigger: commit
+    envVars:
+      - key: ML_USE_TRAINED_MODELS
+        value: false
+
+  - type: web
+    name: no-plate-empty-frontend
+    runtime: static
+    plan: free
+    buildCommand: cd no-plate-empty-frontend && npm ci && npm run build
+    staticPublishPath: no-plate-empty-frontend/dist
+    autoDeployTrigger: commit
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: NODE_VERSION
+        value: 24.14.1
+      - key: VITE_API_BASE_URL
+        value: https://no-plate-empty-gf81.onrender.com
+      - key: VITE_ML_API_BASE_URL
+        sync: false
