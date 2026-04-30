@@ -1,6 +1,5 @@
 const app = require("./app");
 const connectDB = require("./config/db");
-const { backfillStoredGeoPoints } = require("./utils/geoBackfill");
 
 app.use("/api/v1/category", require("./routes/categoryRoutes"));
 app.use("/api/v1/Doner", require("./routes/DonerRoutes"));
@@ -10,22 +9,16 @@ const startServer = async () => {
   try {
     await connectDB();
 
-    const { updatedUsers, updatedDonors } = await backfillStoredGeoPoints();
-
-    if (updatedUsers > 0 || updatedDonors > 0) {
-      console.log(
-        `Geo backfill complete: ${updatedUsers} user(s), ${updatedDonors} donor outlet(s)`
-      );
-    }
-
     const PORT = process.env.PORT || 5001;
+
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
   } catch (error) {
-    console.error("Server startup failed", error);
+    console.error("Server startup failed:", error.message);
+    console.error(error);
     process.exit(1);
   }
 };
 
-void startServer();
+startServer();
