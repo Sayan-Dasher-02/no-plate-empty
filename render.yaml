@@ -19,6 +19,8 @@ services:
         generateValue: true
       - key: REFRESH_SECRET
         generateValue: true
+      - key: FRONTEND_ORIGINS
+        value: https://no-plate-empty-website.onrender.com
 
   - type: web
     name: no-plate-empty-ml
@@ -48,6 +50,6 @@ services:
       - key: NODE_VERSION
         value: 24.14.1
       - key: VITE_API_BASE_URL
-        value: https://no-plate-empty-gf81.onrender.com
+        value: https://no-plate-empty-4iz6.onrender.com
       - key: VITE_ML_API_BASE_URL
         sync: false
